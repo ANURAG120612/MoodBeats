@@ -4,21 +4,18 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.graphics.Color;
+import android.media.AudioAttributes;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.PowerManager;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
-import android.webkit.JavascriptInterface;
-import android.webkit.WebChromeClient;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
@@ -73,12 +70,7 @@ public class MainActivity extends Activity {
     private ImageButton btnFullShuffle, btnFullPrev, btnFullPlay, btnFullNext, btnFullRepeat;
     private TextView tvTimerStatus;
 
-    // YouTube Audio/Video Engine WebView
-    private WebView webYoutubePlayer;
-    private boolean isYoutubeReady = false;
-    private boolean isYoutubePlaying = false;
-
-    // Media & State
+    // Media & Playback Engine (Vin Music Architecture)
     private MediaPlayer mediaPlayer;
     private final List<Song> currentQueue = new ArrayList<Song>();
     private final List<Song> offlineSongs = new ArrayList<Song>();
@@ -104,17 +96,19 @@ public class MainActivity extends Activity {
     private final Runnable seekUpdater = new Runnable() {
         @Override
         public void run() {
-            if (mediaPlayer != null && mediaPlayer.isPlaying() && !isUserSeeking) {
-                int pos = mediaPlayer.getCurrentPosition();
-                int total = mediaPlayer.getDuration();
-                if (total > 0) {
-                    fullSeekBar.setMax(total);
-                    fullSeekBar.setProgress(pos);
-                    String curStr = formatDuration(pos);
-                    String totStr = formatDuration(total);
-                    tvFullCurrentTime.setText(curStr);
-                    tvFullTotalTime.setText(totStr);
-                }
+            if (mediaPlayer != null && !isUserSeeking) {
+                try {
+                    if (mediaPlayer.isPlaying()) {
+                        int pos = mediaPlayer.getCurrentPosition();
+                        int total = mediaPlayer.getDuration();
+                        if (total > 0) {
+                            fullSeekBar.setMax(total);
+                            fullSeekBar.setProgress(pos);
+                            tvFullCurrentTime.setText(formatDuration(pos));
+                            tvFullTotalTime.setText(formatDuration(total));
+                        }
+                    }
+                } catch (Exception ignored) {}
             }
             updateSleepTimerCountdown();
             seekHandler.postDelayed(this, 500);
@@ -137,7 +131,6 @@ public class MainActivity extends Activity {
 
         initOfflineLibrary();
         initViews();
-        setupYouTubePlayer();
         setupPlayerControls();
         setupMoodPills();
         setupBottomNav();
@@ -149,10 +142,10 @@ public class MainActivity extends Activity {
 
     private void initOfflineLibrary() {
         offlineSongs.clear();
-        offlineSongs.add(new Song("off_1", "Ilahi", "Arijit Singh", "Yeh Jawaani Hai Deewani", "03:49", "https://i.ytimg.com/vi/6wZ_a3T8uio/hqdefault.jpg", "6wZ_a3T8uio", R.raw.ilahi, "Happy", true));
-        offlineSongs.add(new Song("off_2", "Kesariya", "Arijit Singh", "Brahmastra", "04:28", "https://i.ytimg.com/vi/BddP6PYo2gs/hqdefault.jpg", "BddP6PYo2gs", R.raw.kesariya, "Romantic", true));
-        offlineSongs.add(new Song("off_3", "Channa Mereya", "Arijit Singh", "Ae Dil Hai Mushkil", "04:49", "https://i.ytimg.com/vi/284Ov7ysmfA/hqdefault.jpg", "284Ov7ysmfA", R.raw.channa_mereya, "Sad", true));
-        offlineSongs.add(new Song("off_4", "O Mere Dil Ke Chain", "Kishore Kumar", "Mere Jeevan Saathi", "04:32", "https://i.ytimg.com/vi/w_h9O0y4uEI/hqdefault.jpg", "w_h9O0y4uEI", R.raw.dil_ke_chain, "Calm", true));
+        offlineSongs.add(new Song("off_1", "Ilahi", "Arijit Singh", "Yeh Jawaani Hai Deewani", "03:49", "https://i.ytimg.com/vi/6wZ_a3T8uio/hqdefault.jpg", "ilahi_local", R.raw.ilahi, "Happy", true));
+        offlineSongs.add(new Song("off_2", "Kesariya", "Arijit Singh", "Brahmastra", "04:28", "https://i.ytimg.com/vi/BddP6PYo2gs/hqdefault.jpg", "kesariya_local", R.raw.kesariya, "Romantic", true));
+        offlineSongs.add(new Song("off_3", "Channa Mereya", "Arijit Singh", "Ae Dil Hai Mushkil", "04:49", "https://i.ytimg.com/vi/284Ov7ysmfA/hqdefault.jpg", "channa_local", R.raw.channa_mereya, "Sad", true));
+        offlineSongs.add(new Song("off_4", "O Mere Dil Ke Chain", "Kishore Kumar", "Mere Jeevan Saathi", "04:32", "https://i.ytimg.com/vi/w_h9O0y4uEI/hqdefault.jpg", "dil_local", R.raw.dil_ke_chain, "Calm", true));
     }
 
     private void initViews() {
@@ -164,7 +157,6 @@ public class MainActivity extends Activity {
         tvOnlineBadge = findViewById(R.id.tv_online_badge);
         loadingSpinner = findViewById(R.id.loading_spinner);
         lvSongs = findViewById(R.id.lv_songs);
-        webYoutubePlayer = findViewById(R.id.web_youtube_player);
 
         // Pills
         pillLiked = findViewById(R.id.pill_liked);
@@ -261,111 +253,6 @@ public class MainActivity extends Activity {
         });
     }
 
-    private void setupYouTubePlayer() {
-        if (webYoutubePlayer == null) return;
-        WebSettings settings = webYoutubePlayer.getSettings();
-        settings.setJavaScriptEnabled(true);
-        settings.setDomStorageEnabled(true);
-        settings.setMediaPlaybackRequiresUserGesture(false);
-        settings.setUserAgentString("Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
-
-        webYoutubePlayer.setWebChromeClient(new WebChromeClient());
-        webYoutubePlayer.setWebViewClient(new WebViewClient());
-        webYoutubePlayer.addJavascriptInterface(new YouTubeInterface(), "Android");
-
-        String html = "<!DOCTYPE html><html><head>"
-            + "<meta name='viewport' content='width=device-width, initial-scale=1.0'>"
-            + "<script src='https://www.youtube.com/iframe_api'></script>"
-            + "</head><body style='margin:0;padding:0;background-color:#0a0a0f;'>"
-            + "<div id='player'></div>"
-            + "<script>"
-            + "var player; var isReady=false; var pendingId=null;"
-            + "function onYouTubeIframeAPIReady(){"
-            + "  player = new YT.Player('player',{"
-            + "    height:'100%', width:'100%', videoId:'',"
-            + "    playerVars:{'autoplay':1,'playsinline':1,'controls':0,'rel':0,'showinfo':0,'modestbranding':1},"
-            + "    events:{'onReady':function(e){isReady=true; if(window.Android) window.Android.onPlayerReady(); if(pendingId){loadVideo(pendingId); pendingId=null;}},"
-            + "            'onStateChange':function(e){if(window.Android) window.Android.onStateChange(e.data);},"
-            + "            'onError':function(e){if(window.Android) window.Android.onError(e.data);}}"
-            + "  });"
-            + "}"
-            + "function loadVideo(id){if(!isReady||!player||!player.loadVideoById){pendingId=id; return;} player.loadVideoById(id); player.playVideo();}"
-            + "function playVideo(){if(player&&player.playVideo) player.playVideo();}"
-            + "function pauseVideo(){if(player&&player.pauseVideo) player.pauseVideo();}"
-            + "function seekTo(s){if(player&&player.seekTo) player.seekTo(s,true);}"
-            + "setInterval(function(){"
-            + "  if(player&&player.getCurrentTime&&player.getDuration){"
-            + "    var c=player.getCurrentTime()||0; var d=player.getDuration()||0;"
-            + "    if(window.Android && d>0) window.Android.onProgress(c,d);"
-            + "  }"
-            + "}, 500);"
-            + "</script></body></html>";
-
-        webYoutubePlayer.loadDataWithBaseURL("https://www.youtube.com", html, "text/html", "UTF-8", null);
-    }
-
-    public class YouTubeInterface {
-        @JavascriptInterface
-        public void onPlayerReady() {
-            mainHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    isYoutubeReady = true;
-                }
-            });
-        }
-
-        @JavascriptInterface
-        public void onStateChange(final int state) {
-            mainHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (state == 1) { // Playing
-                        isYoutubePlaying = true;
-                        btnPlay.setImageResource(R.drawable.ic_pause_black);
-                        btnFullPlay.setImageResource(R.drawable.ic_pause_black);
-                    } else if (state == 2) { // Paused
-                        isYoutubePlaying = false;
-                        btnPlay.setImageResource(R.drawable.ic_play_arrow);
-                        btnFullPlay.setImageResource(R.drawable.ic_play_arrow);
-                    } else if (state == 0) { // Ended
-                        isYoutubePlaying = false;
-                        onTrackFinished();
-                    }
-                }
-            });
-        }
-
-        @JavascriptInterface
-        public void onError(final int code) {
-            mainHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(MainActivity.this, "YouTube stream unavailable, skipping...", Toast.LENGTH_SHORT).show();
-                    playNext();
-                }
-            });
-        }
-
-        @JavascriptInterface
-        public void onProgress(final float currentSec, final float totalSec) {
-            if (isUserSeeking) return;
-            mainHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    int posMs = (int) (currentSec * 1000);
-                    int totalMs = (int) (totalSec * 1000);
-                    if (totalMs > 0) {
-                        fullSeekBar.setMax(totalMs);
-                        fullSeekBar.setProgress(posMs);
-                        tvFullCurrentTime.setText(formatDuration(posMs));
-                        tvFullTotalTime.setText(formatDuration(totalMs));
-                    }
-                }
-            });
-        }
-    }
-
     private void setupBottomNav() {
         navHome.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -405,15 +292,6 @@ public class MainActivity extends Activity {
     }
 
     private void setupPlayerControls() {
-        miniPlayerLayout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (currentSongIndex >= 0 && currentSongIndex < currentQueue.size()) {
-                    nowPlayingOverlay.setVisibility(View.VISIBLE);
-                }
-            }
-        });
-
         btnPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -432,6 +310,15 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
                 toggleCurrentSongLike();
+            }
+        });
+
+        miniPlayerLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (currentSongIndex >= 0 && currentSongIndex < currentQueue.size()) {
+                    nowPlayingOverlay.setVisibility(View.VISIBLE);
+                }
             }
         });
     }
@@ -475,7 +362,41 @@ public class MainActivity extends Activity {
         btnFullDownload.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                toggleCurrentSongLike();
+                if (currentSongIndex < 0 || currentSongIndex >= currentQueue.size()) return;
+                Song song = currentQueue.get(currentSongIndex);
+                if (song.isOffline) {
+                    Toast.makeText(MainActivity.this, "This song is already built-in offline! 📴", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (FavoritesManager.isSongDownloaded(MainActivity.this, song)) {
+                    Toast.makeText(MainActivity.this, "Song already downloaded! 📴", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                Toast.makeText(MainActivity.this, "Downloading " + song.title + "...", Toast.LENGTH_SHORT).show();
+                FavoritesManager.downloadTrack(MainActivity.this, song, new FavoritesManager.DownloadCallback() {
+                    @Override
+                    public void onSuccess(File file) {
+                        mainHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                btnFullDownload.setImageResource(R.drawable.ic_download_done);
+                                btnFullDownload.setColorFilter(Color.parseColor("#00e676"));
+                                songAdapter.notifyDataSetChanged();
+                                Toast.makeText(MainActivity.this, "Downloaded for Offline Playback! 📴", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onError(final String msg) {
+                        mainHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(MainActivity.this, "Download failed: " + msg, Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+                });
             }
         });
 
@@ -484,7 +405,7 @@ public class MainActivity extends Activity {
             public void onClick(View v) {
                 isShuffle = !isShuffle;
                 btnFullShuffle.setColorFilter(isShuffle ? Color.parseColor("#00f5d4") : Color.parseColor("#a0a0b8"));
-                Toast.makeText(MainActivity.this, isShuffle ? "Shuffle On 🔀" : "Shuffle Off", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, isShuffle ? "Shuffle On 🔀" : "Shuffle Off ➡️", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -495,7 +416,7 @@ public class MainActivity extends Activity {
                 if (repeatMode == 0) {
                     btnFullRepeat.setImageResource(R.drawable.ic_repeat);
                     btnFullRepeat.setColorFilter(Color.parseColor("#a0a0b8"));
-                    Toast.makeText(MainActivity.this, "Repeat Off", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "Repeat Off ➡️", Toast.LENGTH_SHORT).show();
                 } else if (repeatMode == 1) {
                     btnFullRepeat.setImageResource(R.drawable.ic_repeat);
                     btnFullRepeat.setColorFilter(Color.parseColor("#00f5d4"));
@@ -531,18 +452,10 @@ public class MainActivity extends Activity {
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 isUserSeeking = false;
-                if (currentSongIndex >= 0 && currentSongIndex < currentQueue.size()) {
-                    Song s = currentQueue.get(currentSongIndex);
-                    if (s.isOffline) {
-                        if (mediaPlayer != null) {
-                            mediaPlayer.seekTo(seekBar.getProgress());
-                        }
-                    } else {
-                        float sec = seekBar.getProgress() / 1000f;
-                        if (webYoutubePlayer != null) {
-                            webYoutubePlayer.loadUrl("javascript:seekTo(" + sec + ")");
-                        }
-                    }
+                if (mediaPlayer != null) {
+                    try {
+                        mediaPlayer.seekTo(seekBar.getProgress());
+                    } catch (Exception ignored) {}
                 }
             }
         });
@@ -556,12 +469,12 @@ public class MainActivity extends Activity {
             return;
         }
 
-        Song song = currentQueue.get(currentSongIndex);
-        if (song.isOffline) {
-            if (mediaPlayer == null) {
-                playTrackAtIndex(currentSongIndex);
-                return;
-            }
+        if (mediaPlayer == null) {
+            playTrackAtIndex(currentSongIndex);
+            return;
+        }
+
+        try {
             if (mediaPlayer.isPlaying()) {
                 mediaPlayer.pause();
                 btnPlay.setImageResource(R.drawable.ic_play_arrow);
@@ -571,18 +484,9 @@ public class MainActivity extends Activity {
                 btnPlay.setImageResource(R.drawable.ic_pause_black);
                 btnFullPlay.setImageResource(R.drawable.ic_pause_black);
             }
-        } else {
-            if (isYoutubePlaying) {
-                if (webYoutubePlayer != null) webYoutubePlayer.loadUrl("javascript:pauseVideo()");
-                isYoutubePlaying = false;
-                btnPlay.setImageResource(R.drawable.ic_play_arrow);
-                btnFullPlay.setImageResource(R.drawable.ic_play_arrow);
-            } else {
-                if (webYoutubePlayer != null) webYoutubePlayer.loadUrl("javascript:playVideo()");
-                isYoutubePlaying = true;
-                btnPlay.setImageResource(R.drawable.ic_pause_black);
-                btnFullPlay.setImageResource(R.drawable.ic_pause_black);
-            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            playTrackAtIndex(currentSongIndex);
         }
     }
 
@@ -681,12 +585,12 @@ public class MainActivity extends Activity {
         if (query.isEmpty()) return;
 
         loadingSpinner.setVisibility(View.VISIBLE);
-        tvSectionTitle.setText("Searching YouTube for \"" + query + "\"...");
+        tvSectionTitle.setText("Searching music for \"" + query + "\"...");
 
         executor.execute(new Runnable() {
             @Override
             public void run() {
-                final List<Song> results = YouTubeMusicApi.search(query, 25);
+                final List<Song> results = CloudMusicApi.search(query, 25);
                 mainHandler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -697,9 +601,9 @@ public class MainActivity extends Activity {
                         songAdapter.notifyDataSetChanged();
                         tvSectionTitle.setText("Search Results: " + query);
                         tvTrackCount.setText(currentQueue.size() + " Songs");
-                        tvOnlineBadge.setText("▶ YouTube");
+                        tvOnlineBadge.setText("⚡ Cloud Stream");
                         if (!results.isEmpty()) {
-                            Toast.makeText(MainActivity.this, "Found " + results.size() + " YouTube songs!", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MainActivity.this, "Found " + results.size() + " songs!", Toast.LENGTH_SHORT).show();
                         }
                     }
                 });
@@ -709,12 +613,12 @@ public class MainActivity extends Activity {
 
     private void fetchTrendingHits() {
         loadingSpinner.setVisibility(View.VISIBLE);
-        tvSectionTitle.setText("Loading YouTube Trending Hits...");
+        tvSectionTitle.setText("Loading Trending Hits...");
 
         executor.execute(new Runnable() {
             @Override
             public void run() {
-                final List<Song> results = YouTubeMusicApi.getMoodSongs("Trending", 25);
+                final List<Song> results = CloudMusicApi.getMoodSongs("Trending", 25);
                 mainHandler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -725,7 +629,7 @@ public class MainActivity extends Activity {
                         songAdapter.notifyDataSetChanged();
                         tvSectionTitle.setText("Trending Hits & Offline Library");
                         tvTrackCount.setText(currentQueue.size() + " Songs");
-                        tvOnlineBadge.setText("▶ YouTube Music");
+                        tvOnlineBadge.setText("⚡ Cloud Stream");
                     }
                 });
             }
@@ -739,7 +643,7 @@ public class MainActivity extends Activity {
         executor.execute(new Runnable() {
             @Override
             public void run() {
-                final List<Song> results = YouTubeMusicApi.getMoodSongs(mood, 25);
+                final List<Song> results = CloudMusicApi.getMoodSongs(mood, 25);
                 mainHandler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -754,7 +658,7 @@ public class MainActivity extends Activity {
                         songAdapter.notifyDataSetChanged();
                         tvSectionTitle.setText(mood + " Mood Playlist");
                         tvTrackCount.setText(currentQueue.size() + " Songs");
-                        tvOnlineBadge.setText("▶ YouTube Music");
+                        tvOnlineBadge.setText("⚡ Cloud Stream");
                     }
                 });
             }
@@ -790,21 +694,16 @@ public class MainActivity extends Activity {
 
         // Check if downloaded / favorite
         boolean isLiked = favoritesManager.isLiked(song.id);
-        btnFullDownload.setImageResource(isLiked ? R.drawable.ic_download_done : R.drawable.ic_download);
-        btnFullDownload.setColorFilter(isLiked ? Color.parseColor("#00e676") : Color.parseColor("#a0a0b8"));
+        boolean isDownloaded = FavoritesManager.isSongDownloaded(this, song);
+        btnFullDownload.setImageResource(isDownloaded ? R.drawable.ic_download_done : R.drawable.ic_download);
+        btnFullDownload.setColorFilter(isDownloaded ? Color.parseColor("#00e676") : Color.parseColor("#a0a0b8"));
 
-        // Release native player before switching
+        // Release previous player safely
         releasePlayer();
 
         try {
             if (song.isOffline && song.rawResId > 0) {
-                // Pause YouTube player if active
-                if (webYoutubePlayer != null) {
-                    webYoutubePlayer.loadUrl("javascript:pauseVideo()");
-                }
-                isYoutubePlaying = false;
-
-                // Native Raw Resource playback
+                // Native Raw Resource playback (100% offline)
                 mediaPlayer = MediaPlayer.create(this, song.rawResId);
                 if (mediaPlayer != null) {
                     mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
@@ -822,27 +721,110 @@ public class MainActivity extends Activity {
                     startSeekUpdate();
                     Toast.makeText(this, "Playing Offline: " + song.title, Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(this, "Could not open audio track", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Could not open offline audio", Toast.LENGTH_SHORT).show();
                 }
+            } else if (FavoritesManager.isSongDownloaded(this, song)) {
+                // Play downloaded offline file directly
+                File localFile = FavoritesManager.getDownloadFile(this, song);
+                mediaPlayer = new MediaPlayer();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    AudioAttributes attrs = new AudioAttributes.Builder()
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .build();
+                    mediaPlayer.setAudioAttributes(attrs);
+                }
+                mediaPlayer.setDataSource(localFile.getAbsolutePath());
+                mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                    @Override
+                    public void onPrepared(MediaPlayer mp) {
+                        mp.start();
+                        int total = mp.getDuration();
+                        if (total > 0) {
+                            fullSeekBar.setMax(total);
+                            tvFullTotalTime.setText(formatDuration(total));
+                        }
+                        startSeekUpdate();
+                        Toast.makeText(MainActivity.this, "Playing Downloaded: " + song.title, Toast.LENGTH_SHORT).show();
+                    }
+                });
+                mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                    @Override
+                    public void onCompletion(MediaPlayer mp) {
+                        onTrackFinished();
+                    }
+                });
+                mediaPlayer.prepareAsync();
             } else {
-                // YouTube Music Playback
-                String videoId = song.streamUrl;
-                if (videoId == null || videoId.isEmpty()) {
-                    videoId = song.id.replace("yt_", "");
-                }
-                if (videoId.contains("watch?v=")) {
-                    int vIdx = videoId.indexOf("watch?v=");
-                    videoId = videoId.substring(vIdx + 8);
+                // Direct Audio Stream Playback (Vin Music Architecture)
+                String streamUrl = song.streamUrl;
+                if (streamUrl == null || streamUrl.isEmpty()) {
+                    Toast.makeText(this, "Stream URL not available", Toast.LENGTH_SHORT).show();
+                    return;
                 }
 
-                if (webYoutubePlayer != null && !videoId.isEmpty()) {
-                    isYoutubePlaying = true;
-                    webYoutubePlayer.loadUrl("javascript:loadVideo('" + videoId + "')");
-                    Toast.makeText(this, "Playing YouTube: " + song.title, Toast.LENGTH_SHORT).show();
+                loadingSpinner.setVisibility(View.VISIBLE);
+                mediaPlayer = new MediaPlayer();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    AudioAttributes attrs = new AudioAttributes.Builder()
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .build();
+                    mediaPlayer.setAudioAttributes(attrs);
                 }
+                mediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
+                mediaPlayer.setDataSource(streamUrl);
+
+                mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                    @Override
+                    public void onPrepared(MediaPlayer mp) {
+                        loadingSpinner.setVisibility(View.GONE);
+                        mp.start();
+                        btnPlay.setImageResource(R.drawable.ic_pause_black);
+                        btnFullPlay.setImageResource(R.drawable.ic_pause_black);
+                        int total = mp.getDuration();
+                        if (total > 0) {
+                            fullSeekBar.setMax(total);
+                            tvFullTotalTime.setText(formatDuration(total));
+                        }
+                        startSeekUpdate();
+                        Toast.makeText(MainActivity.this, "▶ " + song.title, Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+                mediaPlayer.setOnBufferingUpdateListener(new MediaPlayer.OnBufferingUpdateListener() {
+                    @Override
+                    public void onBufferingUpdate(MediaPlayer mp, int percent) {
+                        if (fullSeekBar != null && fullSeekBar.getMax() > 0) {
+                            int sec = (int) ((percent / 100f) * fullSeekBar.getMax());
+                            fullSeekBar.setSecondaryProgress(sec);
+                        }
+                    }
+                });
+
+                mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+                    @Override
+                    public boolean onError(MediaPlayer mp, int what, int extra) {
+                        loadingSpinner.setVisibility(View.GONE);
+                        releasePlayer();
+                        Toast.makeText(MainActivity.this, "Stream connection failed, playing next...", Toast.LENGTH_SHORT).show();
+                        playNext();
+                        return true;
+                    }
+                });
+
+                mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                    @Override
+                    public void onCompletion(MediaPlayer mp) {
+                        onTrackFinished();
+                    }
+                });
+
+                mediaPlayer.prepareAsync();
             }
         } catch (Exception e) {
             e.printStackTrace();
+            loadingSpinner.setVisibility(View.GONE);
             Toast.makeText(this, "Playback error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
@@ -851,7 +833,6 @@ public class MainActivity extends Activity {
         if (sleepAtSongEnd) {
             sleepAtSongEnd = false;
             releasePlayer();
-            if (webYoutubePlayer != null) webYoutubePlayer.loadUrl("javascript:pauseVideo()");
             btnPlay.setImageResource(R.drawable.ic_play_arrow);
             btnFullPlay.setImageResource(R.drawable.ic_play_arrow);
             tvTimerStatus.setVisibility(View.GONE);
@@ -936,7 +917,6 @@ public class MainActivity extends Activity {
                 sleepTimerEndTime = 0;
                 sleepTimerMinutes = 0;
                 releasePlayer();
-                if (webYoutubePlayer != null) webYoutubePlayer.loadUrl("javascript:pauseVideo()");
                 btnPlay.setImageResource(R.drawable.ic_play_arrow);
                 btnFullPlay.setImageResource(R.drawable.ic_play_arrow);
                 tvTimerStatus.setVisibility(View.GONE);
@@ -961,6 +941,8 @@ public class MainActivity extends Activity {
         if (mediaPlayer != null) {
             try {
                 mediaPlayer.stop();
+            } catch (Exception ignored) {}
+            try {
                 mediaPlayer.release();
             } catch (Exception ignored) {}
             mediaPlayer = null;
@@ -987,12 +969,6 @@ public class MainActivity extends Activity {
     protected void onDestroy() {
         seekHandler.removeCallbacks(seekUpdater);
         releasePlayer();
-        if (webYoutubePlayer != null) {
-            try {
-                webYoutubePlayer.loadUrl("about:blank");
-                webYoutubePlayer.destroy();
-            } catch (Exception ignored) {}
-        }
         executor.shutdownNow();
         super.onDestroy();
     }

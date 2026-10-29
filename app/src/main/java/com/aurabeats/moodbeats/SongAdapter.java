@@ -148,7 +148,7 @@ public class SongAdapter extends BaseAdapter {
             holder.tvTag.setTextColor(0xFF00E676);
             loadArtwork(song.artworkUrl, holder.imgArt);
         } else {
-            holder.tvTag.setText(song.mood != null ? song.mood.toUpperCase() : "YOUTUBE");
+            holder.tvTag.setText(song.mood != null ? song.mood.toUpperCase() : "ONLINE");
             holder.tvTag.setTextColor(0xFF00F5D4);
             loadArtwork(song.artworkUrl, holder.imgArt);
         }
