@@ -1,0 +1,22 @@
+# Built APKs and binaries
+*.apk
+*.apk.idsig
+aligned.apk
+base.apk
+compiled_res.zip
+
+# Build and intermediate generation folders
+bin/
+build/
+dex/
+gen/
+
+# Android Studio & Gradle
+.gradle/
+.idea/
+*.iml
+local.properties
+.DS_Store
+
+# Log files
+*.log

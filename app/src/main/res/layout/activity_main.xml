@@ -1,0 +1,741 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0a0a0f">
+
+    <!-- ==================== MAIN CONTENT CONTAINER ==================== -->
+    <LinearLayout
+        android:id="@+id/main_content_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/bottom_controls_anchor"
+        android:orientation="vertical">
+
+        <!-- Top Header Bar -->
+        <LinearLayout
+            android:id="@+id/header_bar"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp">
+
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@mipmap/ic_launcher" />
+
+            <TextView
+                android:id="@+id/tv_app_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:text="MoodBeats"
+                android:textColor="#00f5d4"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/tv_online_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_pill_inactive"
+                android:paddingStart="10dp"
+                android:paddingTop="4dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="4dp"
+                android:text="🟢 Online"
+                android:textColor="#00f5d4"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Search Input Bar -->
+        <LinearLayout
+            android:id="@+id/search_bar_layout"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/bg_search_box"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingEnd="10dp">
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/ic_search_white" />
+
+            <EditText
+                android:id="@+id/et_search"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:background="@null"
+                android:hint="What do you want to listen to?"
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:singleLine="true"
+                android:textColor="#ffffff"
+                android:textColorHint="#6b6b80"
+                android:textSize="14sp" />
+
+            <Button
+                android:id="@+id/btn_search_go"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:background="@drawable/bg_pill_active"
+                android:minWidth="0dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:text="Search"
+                android:textColor="#000000"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Mood & Library Pills Carousel -->
+        <HorizontalScrollView
+            android:id="@+id/mood_scroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/mood_pills_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/pill_liked"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/bg_pill_inactive"
+                    android:minWidth="0dp"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:text="💚 Liked Songs"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/pill_all"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/bg_pill_active"
+                    android:minWidth="0dp"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:text="✨ Trending Hits"
+                    android:textColor="#000000"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/pill_happy"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/bg_pill_inactive"
+                    android:minWidth="0dp"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:text="😊 Happy"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/pill_energetic"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/bg_pill_inactive"
+                    android:minWidth="0dp"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:text="⚡ Energetic"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/pill_calm"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/bg_pill_inactive"
+                    android:minWidth="0dp"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:text="🌿 Calm"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/pill_sad"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/bg_pill_inactive"
+                    android:minWidth="0dp"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:text="💔 Sad"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/pill_romantic"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/bg_pill_inactive"
+                    android:minWidth="0dp"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:text="❤️ Romantic"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/pill_offline"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/bg_pill_inactive"
+                    android:minWidth="0dp"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:text="📴 Downloads"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <!-- Section Title Bar -->
+        <LinearLayout
+            android:id="@+id/section_title_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tv_section_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Worldwide Music Queue"
+                android:textColor="#ffffff"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_track_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:textColor="#a0a0b8"
+                android:textSize="13sp" />
+
+            <ProgressBar
+                android:id="@+id/loading_spinner"
+                style="?android:attr/progressBarStyleSmall"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginStart="10dp"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <!-- Songs List -->
+        <ListView
+            android:id="@+id/lv_songs"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:divider="#141420"
+            android:dividerHeight="1dp"
+            android:footerDividersEnabled="false"
+            android:headerDividersEnabled="false" />
+
+    </LinearLayout>
+
+    <!-- ==================== BOTTOM CONTROLS & NAVIGATION ==================== -->
+    <LinearLayout
+        android:id="@+id/bottom_controls_anchor"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="vertical">
+
+        <!-- Spotify Floating Mini-Player Bar -->
+        <LinearLayout
+            android:id="@+id/mini_player_layout"
+            android:layout_width="match_parent"
+            android:layout_height="62dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginBottom="6dp"
+            android:background="@drawable/bg_mini_player"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp">
+
+            <!-- Playing Song Art -->
+            <ImageView
+                android:id="@+id/player_art"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@drawable/bg_art_rounded"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_music_note" />
+
+            <!-- Playing Title & Artist -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_player_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="Select a song to play"
+                    android:textColor="#ffffff"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_player_artist"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="Tap to open full player"
+                    android:textColor="#a0a0b8"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <!-- Mini Like Button -->
+            <ImageButton
+                android:id="@+id/btn_mini_like"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="@null"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_heart_outline" />
+
+            <!-- Play / Pause Button -->
+            <ImageButton
+                android:id="@+id/btn_player_play"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="4dp"
+                android:background="@drawable/bg_play_circle"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_play_arrow" />
+
+            <!-- Next Button -->
+            <ImageButton
+                android:id="@+id/btn_player_next"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_marginStart="4dp"
+                android:background="@null"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_skip_next" />
+
+        </LinearLayout>
+
+        <!-- Spotify 3-Tab Bottom Navigation Bar -->
+        <LinearLayout
+            android:id="@+id/bottom_nav_bar"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:background="@drawable/bg_bottom_nav"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <!-- Tab 1: Home -->
+            <LinearLayout
+                android:id="@+id/nav_home"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/nav_icon_home"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_home" />
+
+                <TextView
+                    android:id="@+id/nav_text_home"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Home"
+                    android:textColor="#00f5d4"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Tab 2: Search -->
+            <LinearLayout
+                android:id="@+id/nav_search"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/nav_icon_search"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_search_white" />
+
+                <TextView
+                    android:id="@+id/nav_text_search"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Search"
+                    android:textColor="#a0a0b8"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- Tab 3: Your Library -->
+            <LinearLayout
+                android:id="@+id/nav_library"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/nav_icon_library"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_library" />
+
+                <TextView
+                    android:id="@+id/nav_text_library"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Your Library"
+                    android:textColor="#a0a0b8"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- ==================== FULL-SCREEN NOW PLAYING OVERLAY (SPOTIFY STYLE) ==================== -->
+    <LinearLayout
+        android:id="@+id/now_playing_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#0e0e18"
+        android:clickable="true"
+        android:focusable="true"
+        android:orientation="vertical"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:visibility="gone">
+
+        <!-- Top Controls: Collapse & Title & Timer -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/btn_close_now_playing"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@null"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_chevron_down" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:letterSpacing="0.08"
+                    android:text="PLAYING FROM MOODBEATS"
+                    android:textColor="#a0a0b8"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_full_playlist_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Worldwide Music"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <ImageButton
+                android:id="@+id/btn_sleep_timer"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@null"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_timer" />
+        </LinearLayout>
+
+        <!-- Big Center Album Artwork -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="24dp"
+            android:layout_weight="1">
+
+            <ImageView
+                android:id="@+id/iv_full_art"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:background="@drawable/bg_art_rounded"
+                android:elevation="12dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_music_note" />
+        </FrameLayout>
+
+        <!-- Song Metadata & Actions (Heart + Download) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="12dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_full_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="Song Title"
+                    android:textColor="#ffffff"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_full_artist"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="Artist Name • Album"
+                    android:textColor="#a0a0b8"
+                    android:textSize="15sp" />
+            </LinearLayout>
+
+            <!-- Download Button -->
+            <ImageButton
+                android:id="@+id/btn_full_download"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:layout_marginEnd="6dp"
+                android:background="@null"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_download" />
+
+            <!-- Like Heart Button -->
+            <ImageButton
+                android:id="@+id/btn_full_like"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="@null"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_heart_outline" />
+        </LinearLayout>
+
+        <!-- Full Scrubber / Seek Bar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="vertical">
+
+            <SeekBar
+                android:id="@+id/full_seek_bar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="100"
+                android:paddingStart="0dp"
+                android:paddingEnd="0dp"
+                android:progress="0"
+                android:progressTint="#00f5d4"
+                android:thumbTint="#00f5d4" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tv_full_current_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="00:00"
+                    android:textColor="#a0a0b8"
+                    android:textSize="12sp" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/tv_full_total_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="03:45"
+                    android:textColor="#a0a0b8"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Playback Controls (Shuffle, Prev, Big Play, Next, Repeat) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="24dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/btn_full_shuffle"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@null"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_shuffle" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <ImageButton
+                android:id="@+id/btn_full_prev"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@null"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_skip_previous" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <ImageButton
+                android:id="@+id/btn_full_play"
+                android:layout_width="68dp"
+                android:layout_height="68dp"
+                android:background="@drawable/bg_play_circle"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_play_arrow" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <ImageButton
+                android:id="@+id/btn_full_next"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@null"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_skip_next" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <ImageButton
+                android:id="@+id/btn_full_repeat"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@null"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_repeat" />
+        </LinearLayout>
+
+        <!-- Sleep timer indicator text -->
+        <TextView
+            android:id="@+id/tv_timer_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="16dp"
+            android:textColor="#00f5d4"
+            android:textSize="12sp"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+</RelativeLayout>

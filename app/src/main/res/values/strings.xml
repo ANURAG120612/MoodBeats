@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MoodBeats</string>
+    <string name="default_server_url">http://172.20.10.3:5050</string>
+    <string name="settings">Settings</string>
+    <string name="server_settings_title">MoodBeats Connection</string>
+    <string name="server_url_hint">http://192.168.1.X:5050 or https://...</string>
+    <string name="save">Save &amp; Connect</string>
+    <string name="cancel">Cancel</string>
+    <string name="use_offline">Use Offline Mode</string>
+    <string name="retry">Retry Connection</string>
+    <string name="error_connection">Unable to reach MoodBeats server.
+Please make sure your PC server is running or update the server address.</string>
+</resources>
