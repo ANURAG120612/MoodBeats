@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="72dp"
     android:background="#0a0a0f"
+    android:descendantFocusability="blocksDescendants"
     android:gravity="center_vertical"
     android:orientation="horizontal"
     android:paddingStart="16dp"
@@ -56,6 +57,8 @@
         android:layout_height="38dp"
         android:layout_marginEnd="6dp"
         android:background="@null"
+        android:focusable="false"
+        android:focusableInTouchMode="false"
         android:scaleType="centerInside"
         android:src="@drawable/ic_heart_outline" />
 

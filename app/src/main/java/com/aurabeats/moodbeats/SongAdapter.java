@@ -39,6 +39,11 @@ public class SongAdapter extends BaseAdapter {
     }
     private OnFavoriteChangeListener favoriteChangeListener;
 
+    public interface OnSongClickListener {
+        void onSongClick(Song song, int position);
+    }
+    private OnSongClickListener songClickListener;
+
     public SongAdapter(Context context, List<Song> songList, FavoritesManager favoritesManager) {
         this.context = context;
         this.songList = songList;
@@ -48,6 +53,10 @@ public class SongAdapter extends BaseAdapter {
 
     public void setOnFavoriteChangeListener(OnFavoriteChangeListener listener) {
         this.favoriteChangeListener = listener;
+    }
+
+    public void setOnSongClickListener(OnSongClickListener listener) {
+        this.songClickListener = listener;
     }
 
     public void setPlayingIndex(int index) {
@@ -71,7 +80,7 @@ public class SongAdapter extends BaseAdapter {
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public View getView(final int position, View convertView, ViewGroup parent) {
         final ViewHolder holder;
         if (convertView == null) {
             convertView = inflater.inflate(R.layout.item_song, parent, false);
@@ -89,7 +98,7 @@ public class SongAdapter extends BaseAdapter {
 
         final Song song = getItem(position);
         holder.tvTitle.setText(song.title);
-        holder.tvArtist.setText(song.artist + " • " + song.album);
+        holder.tvArtist.setText(song.artist + (song.album != null && !song.album.isEmpty() ? " • " + song.album : ""));
         holder.tvDuration.setText(song.duration);
 
         if (position == playingIndex) {
@@ -103,6 +112,8 @@ public class SongAdapter extends BaseAdapter {
         // Heart Like state
         boolean isLiked = favoritesManager != null && favoritesManager.isLiked(song.id);
         holder.btnLike.setImageResource(isLiked ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
+        holder.btnLike.setFocusable(false);
+        holder.btnLike.setFocusableInTouchMode(false);
         holder.btnLike.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -117,7 +128,17 @@ public class SongAdapter extends BaseAdapter {
             }
         });
 
-        // Offline / Downloaded / Cloud Tag
+        // Click on the song item to play
+        convertView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (songClickListener != null) {
+                    songClickListener.onSongClick(song, position);
+                }
+            }
+        });
+
+        // Offline / Downloaded / YouTube Tag
         if (song.isOffline) {
             holder.tvTag.setText("OFFLINE");
             holder.tvTag.setTextColor(0xFF00E676);
@@ -127,7 +148,7 @@ public class SongAdapter extends BaseAdapter {
             holder.tvTag.setTextColor(0xFF00E676);
             loadArtwork(song.artworkUrl, holder.imgArt);
         } else {
-            holder.tvTag.setText(song.mood != null ? song.mood.toUpperCase() : "CLOUD");
+            holder.tvTag.setText(song.mood != null ? song.mood.toUpperCase() : "YOUTUBE");
             holder.tvTag.setTextColor(0xFF00F5D4);
             loadArtwork(song.artworkUrl, holder.imgArt);
         }
